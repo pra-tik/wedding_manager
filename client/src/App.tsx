@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ChangeEvent } from 'react';
+import { ChevronDown, ChevronUp, Menu } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import toast from 'react-hot-toast';
 import {
@@ -89,6 +90,8 @@ function App() {
   const [showForm, setShowForm] = useState(false);
   const [selectedGuestIds, setSelectedGuestIds] = useState<number[]>([]);
   const [showColumnFilters, setShowColumnFilters] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showGuestActions, setShowGuestActions] = useState(false);
 
   const statuses = useMemo(() => ['All', 'Pending', 'Attending', 'Declined'] as const, []);
   const yesNoOptions = useMemo(
@@ -231,6 +234,16 @@ function App() {
     }
     void reloadData();
   }, [currentUser, search, statusFilter, eventFilter]);
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [activeView]);
+
+  useEffect(() => {
+    if (activeView !== 'guests') {
+      setShowGuestActions(false);
+    }
+  }, [activeView]);
 
   useEffect(() => {
     setSelectedGuestIds((prev) => prev.filter((id) => guests.some((guest) => guest.id === id)));
@@ -623,16 +636,28 @@ function App() {
 
   return (
     <div className="min-h-screen px-3 py-3 sm:px-4 sm:py-5 md:px-8 md:py-8">
-      <div className="mx-auto grid max-w-7xl gap-4 md:grid-cols-[260px_minmax(0,1fr)]">
-        <Sidebar activeView={activeView} onChange={setActiveView} permissions={currentUser.permissions} />
+      <div className="mx-auto max-w-7xl gap-4 md:grid md:grid-cols-[260px_minmax(0,1fr)]">
+        <Sidebar
+          activeView={activeView}
+          onChange={setActiveView}
+          permissions={currentUser.permissions}
+          mobileOpen={mobileMenuOpen}
+          onCloseMobile={() => setMobileMenuOpen(false)}
+        />
 
-        <main className="min-w-0 space-y-4">
+        <main className="mt-4 min-w-0 space-y-4 md:mt-0">
           <header className="card flex flex-col gap-3 p-3 sm:p-4 md:flex-row md:items-center md:justify-between">
-            <div>
+            <div className="flex items-start justify-between gap-3">
+              <button className="btn-muted px-2 py-1 md:hidden" onClick={() => setMobileMenuOpen(true)} aria-label="Open menu">
+                <Menu size={16} />
+              </button>
               <h2 className="text-lg font-semibold text-zinc-900 sm:text-xl">Wedding Management Dashboard</h2>
+            </div>
+            <div>
               <p className="text-sm text-zinc-500">Signed in as {currentUser.username}</p>
             </div>
-            <div className="flex flex-wrap gap-2">
+
+            <div className="hidden flex-wrap gap-2 md:flex">
               {activeView === 'guests' && canEdit('guests') && (
                 <>
                   <button
@@ -668,6 +693,53 @@ function App() {
                 Sign Out
               </button>
             </div>
+
+            <div className="flex gap-2 md:hidden">
+              {activeView === 'guests' && (
+                <button className="btn-muted flex-1" onClick={() => setShowGuestActions((prev) => !prev)}>
+                  Actions {showGuestActions ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </button>
+              )}
+              <button className="btn-muted" onClick={handleLogout}>
+                Sign Out
+              </button>
+            </div>
+
+            {activeView === 'guests' && showGuestActions && (
+              <div className="grid gap-2 md:hidden">
+                {canEdit('guests') && (
+                  <button
+                    className="btn-primary w-full"
+                    onClick={() => {
+                      setEditingGuest(null);
+                      setShowForm(true);
+                    }}
+                  >
+                    Add Guest
+                  </button>
+                )}
+                {canEdit('guests') && (
+                  <label className="btn-muted w-full cursor-pointer">
+                    {uploading ? 'Importing...' : 'Import CSV'}
+                    <input type="file" accept=".csv" className="hidden" onChange={handleCsvImport} disabled={uploading} />
+                  </label>
+                )}
+                {canRead('guests') && (
+                  <button className="btn-muted w-full" onClick={exportGuestsCsv}>
+                    Export CSV
+                  </button>
+                )}
+                {canEdit('guests') && (
+                  <button
+                    className="btn-muted w-full text-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    onClick={handleBulkDelete}
+                    disabled={selectedGuestIds.length === 0}
+                  >
+                    Delete Selected ({selectedGuestIds.length})
+                  </button>
+                )}
+              </div>
+            )}
           </header>
 
           {activeView === 'guests' && canRead('guests') && (

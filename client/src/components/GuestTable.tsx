@@ -76,11 +76,11 @@ export function GuestTable({
               </div>
 
               <div className="mt-3 flex gap-2">
-                <button className="btn-muted flex-1 px-2 py-1 text-xs" onClick={() => onEdit(guest)}>
-                  <Pencil size={14} /> Edit
+                <button className="btn-muted flex-1 px-2 py-1 text-xs" onClick={() => onEdit(guest)} title="Edit guest" aria-label="Edit guest">
+                  <Pencil size={14} />
                 </button>
-                <button className="btn-muted flex-1 px-2 py-1 text-xs text-rose-600" onClick={() => onDelete(guest)}>
-                  <Trash2 size={14} /> Delete
+                <button className="btn-muted flex-1 px-2 py-1 text-xs text-rose-600" onClick={() => onDelete(guest)} title="Delete guest" aria-label="Delete guest">
+                  <Trash2 size={14} />
                 </button>
               </div>
             </article>
