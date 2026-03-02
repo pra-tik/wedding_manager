@@ -123,7 +123,33 @@ export function EventManager({ events, onCreate, onUpdate, onDelete, readOnly = 
         </button>
       </div>
 
-      <div className="card overflow-hidden">
+      <div className="card space-y-3 p-3 md:hidden">
+        <h4 className="text-sm font-semibold text-zinc-800">Events ({events.length})</h4>
+        {!events.length && <p className="text-sm text-zinc-500">No events yet.</p>}
+        {events.map((eventItem) => (
+          <article key={eventItem.id} className="rounded-2xl border border-zinc-200 p-3">
+            <p className="text-sm font-semibold text-zinc-900">{eventItem.name}</p>
+            <p className="text-xs text-zinc-600">{eventItem.eventDate} at {eventItem.eventTime}</p>
+            <p className="text-xs text-zinc-600">{eventItem.location}</p>
+            <p className="mt-1 text-xs text-zinc-600">
+              {[eventItem.lunchProvided && 'Lunch', eventItem.dinnerProvided && 'Dinner', eventItem.snacksProvided && 'Snacks']
+                .filter(Boolean)
+                .join(', ') || '-'}
+            </p>
+            <p className="text-xs text-zinc-600">{eventItem.dressTheme || '-'}</p>
+            <div className="mt-3 flex gap-2">
+              <button className="btn-muted flex-1 px-2 py-1 text-xs" onClick={() => startEdit(eventItem)} disabled={readOnly}>
+                <Pencil size={14} /> Edit
+              </button>
+              <button className="btn-muted flex-1 px-2 py-1 text-xs text-rose-600" onClick={() => onDelete(eventItem.id, eventItem.name)} disabled={readOnly}>
+                <Trash2 size={14} /> Delete
+              </button>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <div className="card hidden overflow-hidden md:block">
         <div className="overflow-x-auto">
           <table className="min-w-full text-left text-sm">
             <thead className="bg-zinc-100 text-zinc-700">

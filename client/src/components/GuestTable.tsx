@@ -33,8 +33,63 @@ export function GuestTable({
   const allSelected = guests.length > 0 && guests.every((guest) => selectedGuestIds.includes(guest.id));
 
   return (
-    <div className="card min-w-0 overflow-hidden">
-      <div className="w-full overflow-x-auto">
+    <div className="space-y-3">
+      <div className="card space-y-3 p-3 md:hidden">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-medium text-zinc-800">
+            Guests ({guests.length})
+          </p>
+          {!!guests.length && (
+            <label className="inline-flex items-center gap-2 text-xs text-zinc-600">
+              <input type="checkbox" checked={allSelected} onChange={(e) => onToggleSelectAll(e.target.checked)} />
+              Select all
+            </label>
+          )}
+        </div>
+
+        {!guests.length && <div className="rounded-xl border border-zinc-200 px-3 py-5 text-center text-sm text-zinc-500">No guests found with current filters.</div>}
+
+        {guests.map((guest) => {
+          const selected = selectedGuestIds.includes(guest.id);
+          const attendingEvents = events.filter((event) => guest.attendance[event.slug]).map((event) => event.name);
+
+          return (
+            <article key={guest.id} className="rounded-2xl border border-zinc-200 p-3">
+              <div className="mb-2 flex items-start justify-between gap-2">
+                <div>
+                  <h4 className="text-sm font-semibold text-zinc-900">{guest.name}</h4>
+                  <p className="text-xs text-zinc-500">{guest.family || '-'}</p>
+                </div>
+                <label className="inline-flex items-center gap-2 text-xs text-zinc-600">
+                  <input type="checkbox" checked={selected} onChange={(e) => onToggleSelectGuest(guest.id, e.target.checked)} />
+                  Select
+                </label>
+              </div>
+
+              <div className="grid gap-1 text-xs text-zinc-700">
+                <p><span className="font-medium">Host:</span> {guest.host || '-'}</p>
+                <p><span className="font-medium">Location:</span> {guest.location || '-'}</p>
+                <p><span className="font-medium">Stay Required:</span> {yesNo(guest.stayRequired)}</p>
+                <p><span className="font-medium">Saree:</span> {yesNo(guest.saree)} ({guest.sareeCost ?? '-'})</p>
+                <p><span className="font-medium">RSVP:</span> <span className={`rounded-full px-2 py-0.5 ${statusStyles[guest.rsvpStatus]}`}>{guest.rsvpStatus}</span></p>
+                <p><span className="font-medium">Events:</span> {attendingEvents.join(', ') || '-'}</p>
+              </div>
+
+              <div className="mt-3 flex gap-2">
+                <button className="btn-muted flex-1 px-2 py-1 text-xs" onClick={() => onEdit(guest)}>
+                  <Pencil size={14} /> Edit
+                </button>
+                <button className="btn-muted flex-1 px-2 py-1 text-xs text-rose-600" onClick={() => onDelete(guest)}>
+                  <Trash2 size={14} /> Delete
+                </button>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+
+      <div className="card hidden min-w-0 overflow-hidden md:block">
+        <div className="w-full overflow-x-auto">
         <table className="w-full min-w-[1240px] text-left text-sm">
           <thead className="bg-zinc-100 text-zinc-700">
             <tr>
@@ -109,6 +164,7 @@ export function GuestTable({
           </tbody>
         </table>
       </div>
+    </div>
     </div>
   );
 }

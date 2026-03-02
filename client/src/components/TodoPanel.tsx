@@ -123,7 +123,28 @@ export function TodoPanel({ todos, onCreate, onUpdate, onDelete, readOnly = fals
         </button>
       </div>
 
-      <div className="card overflow-hidden">
+      <div className="card space-y-3 p-3 md:hidden">
+        <h4 className="text-sm font-semibold text-zinc-800">Tasks ({todos.length})</h4>
+        {!todos.length && <p className="text-sm text-zinc-500">No tasks yet.</p>}
+        {todos.map((todo) => (
+          <article key={todo.id} className="rounded-2xl border border-zinc-200 p-3">
+            <p className="text-sm font-semibold text-zinc-900">{todo.title}</p>
+            <p className="text-xs text-zinc-600">Assignee: {todo.assigneeName} ({todo.assigneeCount})</p>
+            <p className="text-xs text-zinc-600">Status: {todo.status}</p>
+            <p className="text-xs text-zinc-600">Due: {todo.expectedCompletionDate}</p>
+            <div className="mt-3 flex gap-2">
+              <button className="btn-muted flex-1 px-2 py-1 text-xs" onClick={() => startEdit(todo)} disabled={readOnly}>
+                <Pencil size={14} /> Edit
+              </button>
+              <button className="btn-muted flex-1 px-2 py-1 text-xs text-rose-600" onClick={() => onDelete(todo.id, todo.title)} disabled={readOnly}>
+                <Trash2 size={14} /> Delete
+              </button>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <div className="card hidden overflow-hidden md:block">
         <div className="overflow-x-auto">
           <table className="min-w-full text-left text-sm">
             <thead className="bg-zinc-100 text-zinc-700">

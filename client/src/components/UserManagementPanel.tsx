@@ -127,7 +127,81 @@ export function UserManagementPanel({
         </button>
       </div>
 
-      <div className="card overflow-hidden">
+      <div className="space-y-3 md:hidden">
+        {!users.length && <div className="card p-4 text-sm text-zinc-500">No users found.</div>}
+        {users.map((user) => (
+          <article key={user.id} className="card space-y-3 p-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-zinc-900">{user.username}</p>
+              <label className="inline-flex items-center gap-2 text-xs text-zinc-700">
+                <input
+                  type="checkbox"
+                  checked={drafts[user.id]?.isAdmin ?? user.isAdmin}
+                  onChange={(e) =>
+                    setDrafts((prev) => ({
+                      ...prev,
+                      [user.id]: {
+                        isAdmin: e.target.checked,
+                        permissions: prev[user.id]?.permissions ?? { ...user.permissions }
+                      }
+                    }))
+                  }
+                />
+                Admin
+              </label>
+            </div>
+
+            <div className="grid gap-2">
+              {pages.map((page) => (
+                <label key={page} className="flex items-center justify-between gap-2 rounded-lg border border-zinc-200 px-2 py-1">
+                  <span className="text-xs font-medium">{page}</span>
+                  <select
+                    className="input max-w-[110px] py-1 text-xs"
+                    value={(drafts[user.id]?.isAdmin ?? user.isAdmin) ? 'edit' : drafts[user.id]?.permissions?.[page] ?? user.permissions[page]}
+                    onChange={(e) =>
+                      setDrafts((prev) => ({
+                        ...prev,
+                        [user.id]: {
+                          isAdmin: prev[user.id]?.isAdmin ?? user.isAdmin,
+                          permissions: {
+                            ...(prev[user.id]?.permissions ?? user.permissions),
+                            [page]: e.target.value as AccessLevel
+                          }
+                        }
+                      }))
+                    }
+                    disabled={drafts[user.id]?.isAdmin ?? user.isAdmin}
+                  >
+                    {levels.map((level) => (
+                      <option key={level} value={level}>
+                        {level}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <button className="btn-muted px-2 py-1 text-xs" onClick={() => saveUser(user)} disabled={savingUserId === user.id}>
+                {savingUserId === user.id ? 'Saving...' : 'Save Access'}
+              </button>
+              <button className="btn-muted px-2 py-1 text-xs" onClick={() => onResetUserPassword(user.id, user.username)}>
+                Reset Password
+              </button>
+              <button
+                className="btn-muted px-2 py-1 text-xs text-rose-700"
+                onClick={() => onDeleteUser(user.id, user.username)}
+                disabled={currentUser.id === user.id}
+              >
+                Delete
+              </button>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <div className="card hidden overflow-hidden md:block">
         <div className="overflow-x-auto">
           <table className="min-w-full text-left text-sm">
             <thead className="bg-zinc-100 text-zinc-700">

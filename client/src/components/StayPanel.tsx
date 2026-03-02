@@ -147,7 +147,40 @@ export function StayPanel({ stays, candidates, readOnly, onCreate, onUpdate, onD
           />
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="space-y-2 md:hidden">
+          {!filteredCandidates.length && <div className="rounded-xl border border-zinc-200 px-3 py-6 text-center text-sm text-zinc-500">No guests with stay requirement found.</div>}
+          {filteredCandidates.map((candidate) => (
+            <article key={candidate.id} className="rounded-2xl border border-zinc-200 p-3">
+              <p className="text-sm font-semibold text-zinc-900">{candidate.name}</p>
+              <p className="text-xs text-zinc-600">Host: {candidate.host || '-'}</p>
+              <p className="text-xs text-zinc-600">Family: {candidate.family || '-'}</p>
+              <p className="text-xs text-zinc-600">Current: {candidate.stayName || 'Unassigned'}</p>
+              <select
+                className="input mt-2"
+                value={candidate.stayId ?? ''}
+                disabled={readOnly || assigningGuestId === candidate.id}
+                onChange={async (e) => {
+                  const raw = e.target.value;
+                  setAssigningGuestId(candidate.id);
+                  try {
+                    await onAssign(candidate.id, raw ? Number(raw) : null);
+                  } finally {
+                    setAssigningGuestId(null);
+                  }
+                }}
+              >
+                <option value="">Unassigned</option>
+                {stays.map((stay) => (
+                  <option key={stay.id} value={stay.id}>
+                    {stay.name}
+                  </option>
+                ))}
+              </select>
+            </article>
+          ))}
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
           <table className="min-w-full text-left text-sm">
             <thead className="bg-zinc-100 text-zinc-700">
               <tr>
