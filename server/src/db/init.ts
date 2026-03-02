@@ -8,9 +8,31 @@ import { pool } from './pool.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+async function loadMigrationSql() {
+  const candidates = [
+    path.resolve(__dirname, '../migrations/init.sql'),
+    path.resolve(__dirname, '../../src/migrations/init.sql'),
+    path.resolve(process.cwd(), 'server/src/migrations/init.sql')
+  ];
+
+  for (const migrationPath of candidates) {
+    try {
+      await fs.access(migrationPath);
+      return await fs.readFile(migrationPath, 'utf-8');
+    } catch {
+      // try next path
+    }
+  }
+
+  throw new Error(`Migration file not found. Tried: ${candidates.join(', ')}`);
+}
+
 export async function initializeDatabase() {
-  const migrationPath = path.resolve(__dirname, '../migrations/init.sql');
-  const migrationSql = await fs.readFile(migrationPath, 'utf-8');
+  if (process.env.DB_SKIP_MIGRATIONS === 'true') {
+    return;
+  }
+
+  const migrationSql = await loadMigrationSql();
   await pool.query(migrationSql);
 
   const existingAdmin = await getUserByUsername('admin');
