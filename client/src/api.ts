@@ -205,6 +205,27 @@ export async function removeTodo(todoId: number) {
   await api.delete(`/todos/${todoId}`);
 }
 
-export function exportGuestsCsv() {
-  window.open('/api/guests/export', '_blank');
+function resolveFileName(contentDisposition?: string) {
+  if (!contentDisposition) {
+    return 'guests-export.csv';
+  }
+  const match = contentDisposition.match(/filename="?([^"]+)"?/i);
+  return match?.[1] || 'guests-export.csv';
+}
+
+export async function exportGuestsCsv() {
+  const response = await api.get<Blob>('/guests/export', {
+    responseType: 'blob'
+  });
+
+  const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' });
+  const fileName = resolveFileName(response.headers['content-disposition']);
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
 }

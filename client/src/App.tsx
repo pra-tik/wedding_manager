@@ -669,14 +669,21 @@ function App() {
                   >
                     Add Guest
                   </button>
-                  <label className="btn-muted w-full cursor-pointer sm:w-auto">
-                    {uploading ? 'Importing...' : 'Import CSV'}
-                    <input type="file" accept=".csv" className="hidden" onChange={handleCsvImport} disabled={uploading} />
-                  </label>
                 </>
               )}
-              {activeView === 'guests' && canRead('guests') && (
-                <button className="btn-muted w-full sm:w-auto" onClick={exportGuestsCsv}>
+              {activeView === 'guests' && canEdit('imports') && (
+                <label className="btn-muted w-full cursor-pointer sm:w-auto">
+                  {uploading ? 'Importing...' : 'Import CSV'}
+                  <input type="file" accept=".csv" className="hidden" onChange={handleCsvImport} disabled={uploading} />
+                </label>
+              )}
+              {activeView === 'guests' && canRead('imports') && (
+                <button
+                  className="btn-muted w-full sm:w-auto"
+                  onClick={() => {
+                    void exportGuestsCsv().catch(() => toast.error('Failed to export CSV'));
+                  }}
+                >
                   Export CSV
                 </button>
               )}
@@ -718,14 +725,19 @@ function App() {
                     Add Guest
                   </button>
                 )}
-                {canEdit('guests') && (
+                {canEdit('imports') && (
                   <label className="btn-muted w-full cursor-pointer">
                     {uploading ? 'Importing...' : 'Import CSV'}
                     <input type="file" accept=".csv" className="hidden" onChange={handleCsvImport} disabled={uploading} />
                   </label>
                 )}
-                {canRead('guests') && (
-                  <button className="btn-muted w-full" onClick={exportGuestsCsv}>
+                {canRead('imports') && (
+                  <button
+                    className="btn-muted w-full"
+                    onClick={() => {
+                      void exportGuestsCsv().catch(() => toast.error('Failed to export CSV'));
+                    }}
+                  >
                     Export CSV
                   </button>
                 )}

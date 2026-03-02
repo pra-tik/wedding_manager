@@ -898,7 +898,7 @@ router.get('/imports/:id', (req, res) => {
 router.get('/guests/export', async (req, res, next) => {
   try {
     const authedReq = req as unknown as AuthedRequest;
-    if (!requirePermission(authedReq, res, 'guests', 'read')) {
+    if (!requirePermission(authedReq, res, 'imports', 'read')) {
       return;
     }
 
