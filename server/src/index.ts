@@ -1,5 +1,6 @@
 import express from 'express';
 import path from 'node:path';
+import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -19,7 +20,7 @@ app.use(cors());
 app.use(express.json({ limit: '2mb' }));
 app.use('/api', apiRouter);
 
-if (process.env.NODE_ENV === 'production') {
+if (fs.existsSync(clientDistPath)) {
   app.use(express.static(clientDistPath));
   app.get('*', (_req, res) => {
     res.sendFile(path.join(clientDistPath, 'index.html'));
