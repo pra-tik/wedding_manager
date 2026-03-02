@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: 'Avenir Next', 'Segoe UI', sans-serif;
+  color: #18181b;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(circle at top right, #d1fae5 0%, #f4f4f5 45%, #fafafa 100%);
+  overflow-x: hidden;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.card {
+  @apply rounded-2xl bg-white/90 shadow-soft backdrop-blur;
+}
+
+.input {
+  @apply w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-50;
+}
+
+.btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition;
+}
+
+.btn-primary {
+  @apply btn bg-brand-500 text-white hover:bg-brand-700;
+}
+
+.btn-muted {
+  @apply btn bg-zinc-200 text-zinc-700 hover:bg-zinc-300;
+}
