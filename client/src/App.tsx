@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { ChevronDown, ChevronUp, Menu } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -92,6 +92,7 @@ function App() {
   const [showColumnFilters, setShowColumnFilters] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showGuestActions, setShowGuestActions] = useState(false);
+  const guestFormRef = useRef<HTMLDivElement | null>(null);
 
   const statuses = useMemo(() => ['All', 'Pending', 'Attending', 'Declined'] as const, []);
   const yesNoOptions = useMemo(
@@ -244,6 +245,15 @@ function App() {
       setShowGuestActions(false);
     }
   }, [activeView]);
+
+  useEffect(() => {
+    if (!showForm) {
+      return;
+    }
+    requestAnimationFrame(() => {
+      guestFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }, [showForm, editingGuest]);
 
   useEffect(() => {
     setSelectedGuestIds((prev) => prev.filter((id) => guests.some((guest) => guest.id === id)));
@@ -852,7 +862,13 @@ function App() {
 
               <AnimatePresence>
                 {showForm && canEdit('guests') && (
-                  <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
+                  <motion.div
+                    ref={guestFormRef}
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.2 }}
+                  >
                     <GuestForm
                       events={events}
                       initialGuest={editingGuest}
@@ -869,26 +885,28 @@ function App() {
               {loading ? (
                 <div className="card p-6 text-sm text-zinc-500">Loading guests...</div>
               ) : (
-                <GuestTable
-                  guests={displayedGuests}
-                  events={events}
-                  selectedGuestIds={selectedGuestIds}
-                  onToggleSelectGuest={(guestId, selected) => {
-                    setSelectedGuestIds((prev) => (selected ? Array.from(new Set([...prev, guestId])) : prev.filter((id) => id !== guestId)));
-                  }}
-                  onToggleSelectAll={(selected) => {
-                    setSelectedGuestIds(selected ? displayedGuests.map((guest) => guest.id) : []);
-                  }}
-                  onEdit={(guest) => {
-                    if (!canEdit('guests')) {
-                      toast.error('Read-only access');
-                      return;
-                    }
-                    setEditingGuest(guest);
-                    setShowForm(true);
-                  }}
-                  onDelete={handleDeleteGuest}
-                />
+                <div className="max-h-[70dvh] overflow-y-auto overscroll-contain rounded-2xl">
+                  <GuestTable
+                    guests={displayedGuests}
+                    events={events}
+                    selectedGuestIds={selectedGuestIds}
+                    onToggleSelectGuest={(guestId, selected) => {
+                      setSelectedGuestIds((prev) => (selected ? Array.from(new Set([...prev, guestId])) : prev.filter((id) => id !== guestId)));
+                    }}
+                    onToggleSelectAll={(selected) => {
+                      setSelectedGuestIds(selected ? displayedGuests.map((guest) => guest.id) : []);
+                    }}
+                    onEdit={(guest) => {
+                      if (!canEdit('guests')) {
+                        toast.error('Read-only access');
+                        return;
+                      }
+                      setEditingGuest(guest);
+                      setShowForm(true);
+                    }}
+                    onDelete={handleDeleteGuest}
+                  />
+                </div>
               )}
             </section>
           )}
