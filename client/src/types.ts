@@ -118,3 +118,25 @@ export interface UserItem {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface BackupGuest extends Guest {
+  stayId: number | null;
+}
+
+export interface BackupStay {
+  id: number;
+  name: string;
+  location: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BackupPayload {
+  version: 1;
+  exportedAt: string;
+  events: EventItem[];
+  stays: BackupStay[];
+  guests: BackupGuest[];
+  todos: TodoItem[];
+}

@@ -13,6 +13,7 @@ import {
   deleteStay as removeStay,
   deleteUser as removeUserAccount,
   exportGuestsCsv,
+  exportSystemBackup,
   fetchAnalytics,
   fetchEvents,
   fetchGuests,
@@ -23,6 +24,7 @@ import {
   fetchTodos,
   fetchUsers,
   importGuests,
+  importSystemBackup,
   login,
   logout,
   removeEvent,
@@ -48,7 +50,7 @@ import { Sidebar } from './components/Sidebar';
 import { StayPanel } from './components/StayPanel';
 import { TodoPanel } from './components/TodoPanel';
 import { UserManagementPanel } from './components/UserManagementPanel';
-import type { AccessLevel, Analytics, AppPageKey, AuthUser, EventItem, Guest, ImportJob, RsvpStatus, StayCandidateItem, StayItem, TodoItem, UserItem } from './types';
+import type { AccessLevel, Analytics, AppPageKey, AuthUser, BackupPayload, EventItem, Guest, ImportJob, RsvpStatus, StayCandidateItem, StayItem, TodoItem, UserItem } from './types';
 
 type View = 'guests' | 'analytics' | 'timeline' | 'imports' | 'todos' | 'users' | 'stays';
 type YesNoAll = 'all' | 'yes' | 'no';
@@ -67,6 +69,7 @@ function App() {
   const [stayCandidates, setStayCandidates] = useState<StayCandidateItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [backupImporting, setBackupImporting] = useState(false);
   const [importJobs, setImportJobs] = useState<ImportJob[]>([]);
 
   const [search, setSearch] = useState('');
@@ -421,6 +424,51 @@ function App() {
     }
   }
 
+  async function handleExportBackup() {
+    if (!canRead('imports')) {
+      toast.error('Read-only access');
+      return;
+    }
+
+    try {
+      await exportSystemBackup();
+      toast.success('Backup exported');
+    } catch {
+      toast.error('Failed to export backup');
+    }
+  }
+
+  async function handleImportBackup(event: ChangeEvent<HTMLInputElement>) {
+    if (!canEdit('imports')) {
+      toast.error('Read-only access');
+      return;
+    }
+
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+    if (!window.confirm('Importing a full backup will replace all existing guests, events, stays, todos, and attendance. Continue?')) {
+      event.target.value = '';
+      return;
+    }
+
+    setBackupImporting(true);
+    try {
+      const text = await file.text();
+      const payload = JSON.parse(text) as BackupPayload;
+      await importSystemBackup(payload);
+      toast.success('Backup imported successfully');
+      await reloadData();
+      await reloadImportJobs();
+    } catch {
+      toast.error('Failed to import backup JSON');
+    } finally {
+      setBackupImporting(false);
+      event.target.value = '';
+    }
+  }
+
   async function handleCreateEvent(payload: Omit<EventItem, 'id' | 'slug'>) {
     if (!canEdit('timeline')) {
       toast.error('Read-only access');
@@ -706,6 +754,17 @@ function App() {
                   Delete Selected ({selectedGuestIds.length})
                 </button>
               )}
+              {activeView === 'imports' && canRead('imports') && (
+                <button className="btn-muted w-full sm:w-auto" onClick={() => void handleExportBackup()}>
+                  Export Full Backup
+                </button>
+              )}
+              {activeView === 'imports' && canEdit('imports') && (
+                <label className="btn-primary w-full cursor-pointer sm:w-auto">
+                  {backupImporting ? 'Importing Backup...' : 'Import Backup'}
+                  <input type="file" accept=".json,application/json" className="hidden" onChange={handleImportBackup} disabled={backupImporting} />
+                </label>
+              )}
               <button className="btn-muted" onClick={handleLogout}>
                 Sign Out
               </button>
@@ -759,6 +818,22 @@ function App() {
                   >
                     Delete Selected ({selectedGuestIds.length})
                   </button>
+                )}
+              </div>
+            )}
+
+            {activeView === 'imports' && (
+              <div className="grid gap-2 md:hidden">
+                {canRead('imports') && (
+                  <button className="btn-muted w-full" onClick={() => void handleExportBackup()}>
+                    Export Full Backup
+                  </button>
+                )}
+                {canEdit('imports') && (
+                  <label className="btn-primary w-full cursor-pointer">
+                    {backupImporting ? 'Importing Backup...' : 'Import Backup'}
+                    <input type="file" accept=".json,application/json" className="hidden" onChange={handleImportBackup} disabled={backupImporting} />
+                  </label>
                 )}
               </div>
             )}

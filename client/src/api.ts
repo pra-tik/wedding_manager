@@ -11,7 +11,8 @@ import type {
   TodoItem,
   UserItem,
   AppPageKey,
-  AccessLevel
+  AccessLevel,
+  BackupPayload
 } from './types';
 
 const TOKEN_KEY = 'wedding_planner_token';
@@ -228,4 +229,27 @@ export async function exportGuestsCsv() {
   link.click();
   link.remove();
   window.URL.revokeObjectURL(url);
+}
+
+export async function exportSystemBackup() {
+  const response = await api.get<Blob>('/backup/export', {
+    responseType: 'blob'
+  });
+
+  const blob = new Blob([response.data], { type: 'application/json;charset=utf-8;' });
+  const fileName = resolveFileName(response.headers['content-disposition']).endsWith('.json')
+    ? resolveFileName(response.headers['content-disposition'])
+    : 'wedding-backup.json';
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+}
+
+export async function importSystemBackup(payload: BackupPayload) {
+  await api.post('/backup/import', payload);
 }

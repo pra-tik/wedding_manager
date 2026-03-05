@@ -139,6 +139,45 @@ export interface UserUpsertPayload {
   permissions: Record<AppPageKey, AccessLevel>;
 }
 
+export interface BackupGuest {
+  id: number;
+  host: string | null;
+  name: string;
+  family: string | null;
+  location: string | null;
+  stayRequired: boolean;
+  stayId: number | null;
+  saree: boolean;
+  probability: string | null;
+  physicalPatrika: boolean;
+  returnGift: boolean;
+  sareeCost: number | null;
+  email: string | null;
+  phone: string | null;
+  rsvpStatus: RsvpStatus;
+  attendance: Record<string, boolean>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BackupStay {
+  id: number;
+  name: string;
+  location: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BackupPayload {
+  version: 1;
+  exportedAt: string;
+  events: EventItem[];
+  stays: BackupStay[];
+  guests: BackupGuest[];
+  todos: TodoItem[];
+}
+
 function slugify(name: string) {
   return name
     .trim()
@@ -970,4 +1009,202 @@ export async function analyticsSummary() {
       missingSareeCost: dataQuality.rows[0].missing_saree_cost
     }
   };
+}
+
+export async function exportBackupData(): Promise<BackupPayload> {
+  const [events, todos, staysResult, guestsResult] = await Promise.all([
+    getEvents(),
+    listTodos(),
+    pool.query(
+      `SELECT id, name, location, notes, created_at, updated_at
+       FROM stays
+       ORDER BY id ASC`
+    ),
+    pool.query<GuestRow>(
+      `SELECT g.id,
+              g.host,
+              g.name,
+              g.family,
+              g.location,
+              g.stay_required,
+              g.saree,
+              g.probability,
+              g.physical_patrika,
+              g.return_gift,
+              g.saree_cost,
+              g.email,
+              g.phone,
+              g.rsvp_status,
+              g.stay_id,
+              g.created_at,
+              g.updated_at,
+              e.slug AS event_slug,
+              gea.attending
+       FROM guests g
+       LEFT JOIN guest_event_attendance gea ON gea.guest_id = g.id
+       LEFT JOIN events e ON e.id = gea.event_id
+       ORDER BY g.id ASC`
+    )
+  ]);
+
+  const guestsById = new Map<number, BackupGuest>();
+  for (const row of guestsResult.rows) {
+    if (!guestsById.has(row.id)) {
+      guestsById.set(row.id, {
+        id: row.id,
+        host: row.host,
+        name: row.name,
+        family: row.family,
+        location: row.location,
+        stayRequired: row.stay_required,
+        stayId: row.stay_id,
+        saree: row.saree,
+        probability: row.probability,
+        physicalPatrika: row.physical_patrika,
+        returnGift: row.return_gift,
+        sareeCost: row.saree_cost === null ? null : Number(row.saree_cost),
+        email: row.email,
+        phone: row.phone,
+        rsvpStatus: row.rsvp_status,
+        attendance: {},
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+      });
+    }
+
+    if (row.event_slug) {
+      guestsById.get(row.id)!.attendance[row.event_slug] = Boolean(row.attending);
+    }
+  }
+
+  return {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    events,
+    stays: staysResult.rows.map((row) => ({
+      id: row.id as number,
+      name: row.name as string,
+      location: row.location as string | null,
+      notes: row.notes as string | null,
+      createdAt: row.created_at as string,
+      updatedAt: row.updated_at as string
+    })),
+    guests: Array.from(guestsById.values()),
+    todos
+  };
+}
+
+export async function importBackupData(payload: BackupPayload): Promise<void> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    await client.query(`TRUNCATE TABLE guest_event_attendance, guests, events, stays, todos RESTART IDENTITY CASCADE`);
+
+    const sortedEvents = [...payload.events].sort((a, b) => a.id - b.id);
+    for (const eventItem of sortedEvents) {
+      await client.query(
+        `INSERT INTO events(id, slug, name, event_date, event_time, location, lunch_provided, dinner_provided, snacks_provided, dress_theme, other_options, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+        [
+          eventItem.id,
+          eventItem.slug,
+          eventItem.name,
+          eventItem.eventDate,
+          eventItem.eventTime,
+          eventItem.location,
+          Boolean(eventItem.lunchProvided),
+          Boolean(eventItem.dinnerProvided),
+          Boolean(eventItem.snacksProvided),
+          eventItem.dressTheme ?? null,
+          eventItem.otherOptions ?? null,
+          new Date()
+        ]
+      );
+    }
+
+    const sortedStays = [...payload.stays].sort((a, b) => a.id - b.id);
+    for (const stayItem of sortedStays) {
+      await client.query(
+        `INSERT INTO stays(id, name, location, notes, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [stayItem.id, stayItem.name, stayItem.location ?? null, stayItem.notes ?? null, stayItem.createdAt, stayItem.updatedAt]
+      );
+    }
+
+    const sortedGuests = [...payload.guests].sort((a, b) => a.id - b.id);
+    for (const guest of sortedGuests) {
+      await client.query(
+        `INSERT INTO guests(
+          id, host, name, family, location, stay_required, stay_id, saree, probability, physical_patrika, return_gift, saree_cost, email, phone, rsvp_status, created_at, updated_at
+         )
+         VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
+        [
+          guest.id,
+          guest.host ?? null,
+          guest.name,
+          guest.family ?? null,
+          guest.location ?? null,
+          Boolean(guest.stayRequired),
+          guest.stayId ?? null,
+          Boolean(guest.saree),
+          guest.probability ?? null,
+          Boolean(guest.physicalPatrika),
+          Boolean(guest.returnGift),
+          guest.sareeCost ?? null,
+          guest.email ?? null,
+          guest.phone ?? null,
+          guest.rsvpStatus,
+          guest.createdAt,
+          guest.updatedAt
+        ]
+      );
+    }
+
+    const eventIdBySlug = new Map(payload.events.map((eventItem) => [eventItem.slug, eventItem.id]));
+    for (const guest of sortedGuests) {
+      for (const [eventSlug, attending] of Object.entries(guest.attendance)) {
+        const eventId = eventIdBySlug.get(eventSlug);
+        if (!eventId) {
+          continue;
+        }
+        await client.query(
+          `INSERT INTO guest_event_attendance(guest_id, event_id, attending)
+           VALUES($1, $2, $3)`,
+          [guest.id, eventId, Boolean(attending)]
+        );
+      }
+    }
+
+    const sortedTodos = [...payload.todos].sort((a, b) => a.id - b.id);
+    for (const todo of sortedTodos) {
+      await client.query(
+        `INSERT INTO todos(
+          id, title, assignee_name, assignee_count, status, expected_completion_date, created_at, updated_at
+         )
+         VALUES($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [todo.id, todo.title, todo.assigneeName, todo.assigneeCount, todo.status, todo.expectedCompletionDate, todo.createdAt, todo.updatedAt]
+      );
+    }
+
+    await client.query(
+      `SELECT setval(pg_get_serial_sequence('events', 'id'), COALESCE((SELECT MAX(id) FROM events), 1), (SELECT COUNT(*) > 0 FROM events))`
+    );
+    await client.query(
+      `SELECT setval(pg_get_serial_sequence('stays', 'id'), COALESCE((SELECT MAX(id) FROM stays), 1), (SELECT COUNT(*) > 0 FROM stays))`
+    );
+    await client.query(
+      `SELECT setval(pg_get_serial_sequence('guests', 'id'), COALESCE((SELECT MAX(id) FROM guests), 1), (SELECT COUNT(*) > 0 FROM guests))`
+    );
+    await client.query(
+      `SELECT setval(pg_get_serial_sequence('todos', 'id'), COALESCE((SELECT MAX(id) FROM todos), 1), (SELECT COUNT(*) > 0 FROM todos))`
+    );
+
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
 }

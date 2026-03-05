@@ -25,6 +25,8 @@ import {
   getEvents,
   getUserById,
   getUserByUsername,
+  exportBackupData,
+  importBackupData,
   listStayCandidates,
   listStays,
   listTodos,
@@ -36,6 +38,7 @@ import {
   updateGuest,
   updateStay,
   updateUser,
+  type BackupPayload,
   type EventUpsertPayload,
   type GuestUpsertPayload,
   type StayUpsertPayload
@@ -143,6 +146,70 @@ const staySchema = z.object({
 const stayAssignmentSchema = z.object({
   guestId: z.number().int().positive(),
   stayId: z.number().int().positive().nullable()
+});
+
+const backupEventSchema = z.object({
+  id: z.number().int().positive(),
+  slug: z.string().min(1),
+  name: z.string().min(1),
+  eventDate: z.string().min(1),
+  eventTime: z.string().min(1),
+  location: z.string().min(1),
+  lunchProvided: z.boolean(),
+  dinnerProvided: z.boolean(),
+  snacksProvided: z.boolean(),
+  dressTheme: z.string().nullable(),
+  otherOptions: z.string().nullable()
+});
+
+const backupStaySchema = z.object({
+  id: z.number().int().positive(),
+  name: z.string().min(1),
+  location: z.string().nullable(),
+  notes: z.string().nullable(),
+  createdAt: z.string().min(1),
+  updatedAt: z.string().min(1)
+});
+
+const backupGuestSchema = z.object({
+  id: z.number().int().positive(),
+  host: z.string().nullable(),
+  name: z.string().min(1),
+  family: z.string().nullable(),
+  location: z.string().nullable(),
+  stayRequired: z.boolean(),
+  stayId: z.number().int().positive().nullable(),
+  saree: z.boolean(),
+  probability: z.string().nullable(),
+  physicalPatrika: z.boolean(),
+  returnGift: z.boolean(),
+  sareeCost: z.number().nullable(),
+  email: z.string().nullable(),
+  phone: z.string().nullable(),
+  rsvpStatus: z.enum(['Pending', 'Attending', 'Declined']),
+  attendance: z.record(z.boolean()),
+  createdAt: z.string().min(1),
+  updatedAt: z.string().min(1)
+});
+
+const backupTodoSchema = z.object({
+  id: z.number().int().positive(),
+  title: z.string().min(1),
+  assigneeName: z.string().min(1),
+  assigneeCount: z.number().int().min(1),
+  status: z.enum(['Pending', 'In Progress', 'Completed']),
+  expectedCompletionDate: z.string().min(1),
+  createdAt: z.string().min(1),
+  updatedAt: z.string().min(1)
+});
+
+const backupPayloadSchema = z.object({
+  version: z.literal(1),
+  exportedAt: z.string().min(1),
+  events: z.array(backupEventSchema),
+  stays: z.array(backupStaySchema),
+  guests: z.array(backupGuestSchema),
+  todos: z.array(backupTodoSchema)
 });
 
 type ImportStatus = 'queued' | 'processing' | 'completed' | 'failed';
@@ -954,6 +1021,39 @@ router.get('/guests/export', async (req, res, next) => {
     }
 
     csvStream.end();
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get('/backup/export', async (req, res, next) => {
+  try {
+    const authedReq = req as unknown as AuthedRequest;
+    if (!requirePermission(authedReq, res, 'imports', 'read')) {
+      return;
+    }
+
+    const backup = await exportBackupData();
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="wedding-backup-${stamp}.json"`);
+    res.json(backup);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/backup/import', async (req, res, next) => {
+  try {
+    const authedReq = req as unknown as AuthedRequest;
+    if (!requirePermission(authedReq, res, 'imports', 'edit')) {
+      return;
+    }
+
+    const payload = backupPayloadSchema.parse(req.body) as BackupPayload;
+    await importBackupData(payload);
+    res.status(204).send();
   } catch (error) {
     next(error);
   }

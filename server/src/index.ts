@@ -17,7 +17,7 @@ const port = Number(process.env.PORT || 4000);
 const clientDistPath = path.resolve(__dirname, '../../client/dist');
 
 app.use(cors());
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ limit: '10mb' }));
 app.use('/api', apiRouter);
 
 if (fs.existsSync(clientDistPath)) {
