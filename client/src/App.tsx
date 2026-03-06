@@ -95,6 +95,7 @@ function App() {
   const [showColumnFilters, setShowColumnFilters] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showGuestActions, setShowGuestActions] = useState(false);
+  const [showDesktopMoreActions, setShowDesktopMoreActions] = useState(false);
   const guestFormRef = useRef<HTMLDivElement | null>(null);
 
   const statuses = useMemo(() => ['All', 'Pending', 'Attending', 'Declined'] as const, []);
@@ -247,6 +248,7 @@ function App() {
     if (activeView !== 'guests') {
       setShowGuestActions(false);
     }
+    setShowDesktopMoreActions(false);
   }, [activeView]);
 
   useEffect(() => {
@@ -704,7 +706,7 @@ function App() {
         />
 
         <main className="mt-4 min-w-0 space-y-4 md:mt-0">
-          <header className="card flex flex-col gap-3 p-3 sm:p-4 md:flex-row md:items-center md:justify-between">
+          <header className="card flex flex-col gap-3 p-3 sm:p-4">
             <div className="flex items-start justify-between gap-3">
               <button className="btn-muted px-2 py-1 md:hidden" onClick={() => setMobileMenuOpen(true)} aria-label="Open menu">
                 <Menu size={16} />
@@ -715,11 +717,17 @@ function App() {
               <p className="text-sm text-zinc-500">Signed in as {currentUser.username}</p>
             </div>
 
-            <div className="hidden flex-wrap gap-2 md:flex">
-              {activeView === 'guests' && canEdit('guests') && (
-                <>
+            <div className="hidden md:flex">
+              <button className="btn-muted" onClick={() => setShowDesktopMoreActions((prev) => !prev)}>
+                Actions {showDesktopMoreActions ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              </button>
+            </div>
+
+            {showDesktopMoreActions && (
+              <div className="hidden grid gap-2 md:grid-cols-3 lg:grid-cols-5 md:grid">
+                {activeView === 'guests' && canEdit('guests') && (
                   <button
-                    className="btn-primary w-full sm:w-auto"
+                    className="btn-primary"
                     onClick={() => {
                       setEditingGuest(null);
                       setShowForm(true);
@@ -727,48 +735,48 @@ function App() {
                   >
                     Add Guest
                   </button>
-                </>
-              )}
-              {activeView === 'guests' && canEdit('imports') && (
-                <label className="btn-muted w-full cursor-pointer sm:w-auto">
-                  {uploading ? 'Importing...' : 'Import CSV'}
-                  <input type="file" accept=".csv" className="hidden" onChange={handleCsvImport} disabled={uploading} />
-                </label>
-              )}
-              {activeView === 'guests' && canRead('imports') && (
-                <button
-                  className="btn-muted w-full sm:w-auto"
-                  onClick={() => {
-                    void exportGuestsCsv().catch(() => toast.error('Failed to export CSV'));
-                  }}
-                >
-                  Export CSV
+                )}
+                {activeView === 'guests' && canEdit('imports') && (
+                  <label className="btn-muted cursor-pointer">
+                    {uploading ? 'Importing...' : 'Import CSV'}
+                    <input type="file" accept=".csv" className="hidden" onChange={handleCsvImport} disabled={uploading} />
+                  </label>
+                )}
+                {activeView === 'guests' && canRead('imports') && (
+                  <button
+                    className="btn-muted"
+                    onClick={() => {
+                      void exportGuestsCsv().catch(() => toast.error('Failed to export CSV'));
+                    }}
+                  >
+                    Export CSV
+                  </button>
+                )}
+                {activeView === 'guests' && canEdit('guests') && (
+                  <button
+                    className="btn-muted text-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    onClick={handleBulkDelete}
+                    disabled={selectedGuestIds.length === 0}
+                  >
+                    Delete ({selectedGuestIds.length})
+                  </button>
+                )}
+                {canRead('imports') && (
+                  <button className="btn-muted" onClick={() => void handleExportBackup()}>
+                    Export Full Backup
+                  </button>
+                )}
+                {canEdit('imports') && (
+                  <label className="btn-primary cursor-pointer">
+                    {backupImporting ? 'Importing Backup...' : 'Import Backup'}
+                    <input type="file" accept=".json,application/json" className="hidden" onChange={handleImportBackup} disabled={backupImporting} />
+                  </label>
+                )}
+                <button className="btn-muted" onClick={handleLogout}>
+                  Sign Out
                 </button>
-              )}
-              {activeView === 'guests' && canEdit('guests') && (
-                <button
-                  className="btn-muted w-full text-rose-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-                  onClick={handleBulkDelete}
-                  disabled={selectedGuestIds.length === 0}
-                >
-                  Delete Selected ({selectedGuestIds.length})
-                </button>
-              )}
-              {activeView === 'imports' && canRead('imports') && (
-                <button className="btn-muted w-full sm:w-auto" onClick={() => void handleExportBackup()}>
-                  Export Full Backup
-                </button>
-              )}
-              {activeView === 'imports' && canEdit('imports') && (
-                <label className="btn-primary w-full cursor-pointer sm:w-auto">
-                  {backupImporting ? 'Importing Backup...' : 'Import Backup'}
-                  <input type="file" accept=".json,application/json" className="hidden" onChange={handleImportBackup} disabled={backupImporting} />
-                </label>
-              )}
-              <button className="btn-muted" onClick={handleLogout}>
-                Sign Out
-              </button>
-            </div>
+              </div>
+            )}
 
             <div className="flex gap-2 md:hidden">
               {activeView === 'guests' && (
@@ -818,6 +826,17 @@ function App() {
                   >
                     Delete Selected ({selectedGuestIds.length})
                   </button>
+                )}
+                {canRead('imports') && (
+                  <button className="btn-muted w-full" onClick={() => void handleExportBackup()}>
+                    Export Full Backup
+                  </button>
+                )}
+                {canEdit('imports') && (
+                  <label className="btn-primary w-full cursor-pointer">
+                    {backupImporting ? 'Importing Backup...' : 'Import Backup'}
+                    <input type="file" accept=".json,application/json" className="hidden" onChange={handleImportBackup} disabled={backupImporting} />
+                  </label>
                 )}
               </div>
             )}
