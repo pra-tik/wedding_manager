@@ -26,10 +26,12 @@ export function TodoPanel({ todos, onCreate, onUpdate, onDelete, readOnly = fals
   const [editingTodo, setEditingTodo] = useState<TodoItem | null>(null);
   const [form, setForm] = useState<TodoPayload>(initialForm);
   const [submitting, setSubmitting] = useState(false);
+  const [showForm, setShowForm] = useState(false);
 
   function startCreate() {
     setEditingTodo(null);
     setForm(initialForm);
+    setShowForm(false);
   }
 
   function startEdit(todo: TodoItem) {
@@ -41,6 +43,7 @@ export function TodoPanel({ todos, onCreate, onUpdate, onDelete, readOnly = fals
       status: todo.status,
       expectedCompletionDate: todo.expectedCompletionDate
     });
+    setShowForm(true);
   }
 
   async function submit() {
@@ -61,66 +64,82 @@ export function TodoPanel({ todos, onCreate, onUpdate, onDelete, readOnly = fals
     <section className="space-y-4">
       <div className="card space-y-4 p-3 sm:p-5">
         <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
-          <h3 className="text-base font-semibold text-zinc-900">{editingTodo ? 'Edit Task' : 'Add Task'}</h3>
-          {editingTodo && (
+          <h3 className="text-base font-semibold text-zinc-900">Tasks</h3>
+          {!readOnly && !showForm && (
+            <button
+              className="btn-primary w-full sm:w-auto"
+              onClick={() => {
+                setEditingTodo(null);
+                setForm(initialForm);
+                setShowForm(true);
+              }}
+            >
+              Add Task
+            </button>
+          )}
+          {!readOnly && showForm && (
             <button className="btn-muted w-full sm:w-auto" onClick={startCreate}>
-              Cancel Edit
+              {editingTodo ? 'Cancel Edit' : 'Close Form'}
             </button>
           )}
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2">
-          <input
-            className="input"
-            placeholder="Task title"
-            value={form.title}
-            onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
-            disabled={readOnly}
-          />
-          <input
-            className="input"
-            placeholder="Assignee name"
-            value={form.assigneeName}
-            onChange={(e) => setForm((prev) => ({ ...prev, assigneeName: e.target.value }))}
-            disabled={readOnly}
-          />
-          <input
-            className="input"
-            type="number"
-            min="1"
-            placeholder="Number of assignee"
-            value={form.assigneeCount}
-            onChange={(e) => setForm((prev) => ({ ...prev, assigneeCount: Number(e.target.value) || 1 }))}
-            disabled={readOnly}
-          />
-          <select
-            className="input"
-            value={form.status}
-            onChange={(e) => setForm((prev) => ({ ...prev, status: e.target.value as TodoStatus }))}
-            disabled={readOnly}
-          >
-            {statuses.map((status) => (
-              <option key={status} value={status}>
-                {status}
-              </option>
-            ))}
-          </select>
-          <input
-            className="input"
-            type="date"
-            value={form.expectedCompletionDate}
-            onChange={(e) => setForm((prev) => ({ ...prev, expectedCompletionDate: e.target.value }))}
-            disabled={readOnly}
-          />
-        </div>
+        {!readOnly && showForm && (
+          <>
+            <div className="grid gap-3 md:grid-cols-2">
+              <input
+                className="input"
+                placeholder="Task title"
+                value={form.title}
+                onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
+                disabled={readOnly}
+              />
+              <input
+                className="input"
+                placeholder="Assignee name"
+                value={form.assigneeName}
+                onChange={(e) => setForm((prev) => ({ ...prev, assigneeName: e.target.value }))}
+                disabled={readOnly}
+              />
+              <input
+                className="input"
+                type="number"
+                min="1"
+                placeholder="Number of assignee"
+                value={form.assigneeCount}
+                onChange={(e) => setForm((prev) => ({ ...prev, assigneeCount: Number(e.target.value) || 1 }))}
+                disabled={readOnly}
+              />
+              <select
+                className="input"
+                value={form.status}
+                onChange={(e) => setForm((prev) => ({ ...prev, status: e.target.value as TodoStatus }))}
+                disabled={readOnly}
+              >
+                {statuses.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </select>
+              <input
+                className="input"
+                type="date"
+                value={form.expectedCompletionDate}
+                onChange={(e) => setForm((prev) => ({ ...prev, expectedCompletionDate: e.target.value }))}
+                disabled={readOnly}
+              />
+            </div>
 
-        <button
-          className="btn-primary w-full sm:w-auto"
-          onClick={submit}
-          disabled={readOnly || submitting || !form.title || !form.assigneeName || !form.expectedCompletionDate}
-        >
-          {submitting ? 'Saving...' : editingTodo ? 'Update Task' : 'Add Task'}
-        </button>
+            <button
+              className="btn-primary w-full sm:w-auto"
+              onClick={submit}
+              disabled={readOnly || submitting || !form.title || !form.assigneeName || !form.expectedCompletionDate}
+            >
+              {submitting ? 'Saving...' : editingTodo ? 'Update Task' : 'Add Task'}
+            </button>
+          </>
+        )}
       </div>
 
       <div className="card space-y-3 p-3 md:hidden">

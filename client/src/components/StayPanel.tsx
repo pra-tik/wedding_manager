@@ -22,12 +22,14 @@ export function StayPanel({ stays, candidates, readOnly, onCreate, onUpdate, onD
   const [editingStay, setEditingStay] = useState<StayItem | null>(null);
   const [form, setForm] = useState(blankForm);
   const [submitting, setSubmitting] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState('');
   const [assigningGuestId, setAssigningGuestId] = useState<number | null>(null);
 
   function startCreate() {
     setEditingStay(null);
     setForm(blankForm);
+    setShowForm(false);
   }
 
   function startEdit(stay: StayItem) {
@@ -37,6 +39,7 @@ export function StayPanel({ stays, candidates, readOnly, onCreate, onUpdate, onD
       location: stay.location ?? '',
       notes: stay.notes ?? ''
     });
+    setShowForm(true);
   }
 
   async function submit() {
@@ -75,23 +78,39 @@ export function StayPanel({ stays, candidates, readOnly, onCreate, onUpdate, onD
     <section className="space-y-4">
       <div className="card space-y-4 p-3 sm:p-5">
         <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
-          <h3 className="text-base font-semibold text-zinc-900">{editingStay ? 'Edit Stay' : 'Create Stay'}</h3>
-          {editingStay && (
+          <h3 className="text-base font-semibold text-zinc-900">Stays</h3>
+          {!readOnly && !showForm && (
+            <button
+              className="btn-primary w-full sm:w-auto"
+              onClick={() => {
+                setEditingStay(null);
+                setForm(blankForm);
+                setShowForm(true);
+              }}
+            >
+              Create Stay
+            </button>
+          )}
+          {!readOnly && showForm && (
             <button className="btn-muted w-full sm:w-auto" onClick={startCreate} disabled={readOnly}>
-              Cancel Edit
+              {editingStay ? 'Cancel Edit' : 'Close Form'}
             </button>
           )}
         </div>
 
-        <div className="grid gap-3 md:grid-cols-3">
-          <input className="input" placeholder="Stay name" value={form.name} onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))} disabled={readOnly} />
-          <input className="input" placeholder="Location" value={form.location} onChange={(e) => setForm((prev) => ({ ...prev, location: e.target.value }))} disabled={readOnly} />
-          <input className="input" placeholder="Notes" value={form.notes} onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))} disabled={readOnly} />
-        </div>
+        {!readOnly && showForm && (
+          <>
+            <div className="grid gap-3 md:grid-cols-3">
+              <input className="input" placeholder="Stay name" value={form.name} onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))} disabled={readOnly} />
+              <input className="input" placeholder="Location" value={form.location} onChange={(e) => setForm((prev) => ({ ...prev, location: e.target.value }))} disabled={readOnly} />
+              <input className="input" placeholder="Notes" value={form.notes} onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))} disabled={readOnly} />
+            </div>
 
-        <button className="btn-primary w-full sm:w-auto" onClick={submit} disabled={readOnly || submitting || !form.name.trim()}>
-          {submitting ? 'Saving...' : editingStay ? 'Update Stay' : 'Create Stay'}
-        </button>
+            <button className="btn-primary w-full sm:w-auto" onClick={submit} disabled={readOnly || submitting || !form.name.trim()}>
+              {submitting ? 'Saving...' : editingStay ? 'Update Stay' : 'Create Stay'}
+            </button>
+          </>
+        )}
       </div>
 
       <div className="card space-y-3 p-3 sm:p-5">

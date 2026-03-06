@@ -28,10 +28,12 @@ export function EventManager({ events, onCreate, onUpdate, onDelete, readOnly = 
   const [editingEvent, setEditingEvent] = useState<EventItem | null>(null);
   const [form, setForm] = useState<EventFormPayload>(initialForm);
   const [submitting, setSubmitting] = useState(false);
+  const [showForm, setShowForm] = useState(false);
 
   function startCreate() {
     setEditingEvent(null);
     setForm(initialForm);
+    setShowForm(false);
   }
 
   function startEdit(eventItem: EventItem) {
@@ -47,6 +49,7 @@ export function EventManager({ events, onCreate, onUpdate, onDelete, readOnly = 
       dressTheme: eventItem.dressTheme ?? '',
       otherOptions: eventItem.otherOptions ?? ''
     });
+    setShowForm(true);
   }
 
   async function submit() {
@@ -67,60 +70,76 @@ export function EventManager({ events, onCreate, onUpdate, onDelete, readOnly = 
     <section className="space-y-4">
       <div className="card space-y-4 p-3 sm:p-5">
         <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
-          <h3 className="text-base font-semibold text-zinc-900">{editingEvent ? 'Edit Event' : 'Add Event'}</h3>
-          {editingEvent && (
+          <h3 className="text-base font-semibold text-zinc-900">Events</h3>
+          {!readOnly && !showForm && (
+            <button
+              className="btn-primary w-full sm:w-auto"
+              onClick={() => {
+                setEditingEvent(null);
+                setForm(initialForm);
+                setShowForm(true);
+              }}
+            >
+              Add Event
+            </button>
+          )}
+          {!readOnly && showForm && (
             <button className="btn-muted w-full sm:w-auto" onClick={startCreate}>
-              Cancel Edit
+              {editingEvent ? 'Cancel Edit' : 'Close Form'}
             </button>
           )}
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2">
-          <input className="input" placeholder="Event name" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} disabled={readOnly} />
-          <input className="input" placeholder="Location" value={form.location} onChange={(e) => setForm((p) => ({ ...p, location: e.target.value }))} disabled={readOnly} />
-          <input className="input" type="date" value={form.eventDate} onChange={(e) => setForm((p) => ({ ...p, eventDate: e.target.value }))} disabled={readOnly} />
-          <input className="input" type="time" value={form.eventTime} onChange={(e) => setForm((p) => ({ ...p, eventTime: e.target.value }))} disabled={readOnly} />
-          <input className="input" placeholder="Dress theme" value={form.dressTheme ?? ''} onChange={(e) => setForm((p) => ({ ...p, dressTheme: e.target.value }))} disabled={readOnly} />
-          <input className="input" placeholder="Other options" value={form.otherOptions ?? ''} onChange={(e) => setForm((p) => ({ ...p, otherOptions: e.target.value }))} disabled={readOnly} />
-        </div>
+        {!readOnly && showForm && (
+          <>
+            <div className="grid gap-3 md:grid-cols-2">
+              <input className="input" placeholder="Event name" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} disabled={readOnly} />
+              <input className="input" placeholder="Location" value={form.location} onChange={(e) => setForm((p) => ({ ...p, location: e.target.value }))} disabled={readOnly} />
+              <input className="input" type="date" value={form.eventDate} onChange={(e) => setForm((p) => ({ ...p, eventDate: e.target.value }))} disabled={readOnly} />
+              <input className="input" type="time" value={form.eventTime} onChange={(e) => setForm((p) => ({ ...p, eventTime: e.target.value }))} disabled={readOnly} />
+              <input className="input" placeholder="Dress theme" value={form.dressTheme ?? ''} onChange={(e) => setForm((p) => ({ ...p, dressTheme: e.target.value }))} disabled={readOnly} />
+              <input className="input" placeholder="Other options" value={form.otherOptions ?? ''} onChange={(e) => setForm((p) => ({ ...p, otherOptions: e.target.value }))} disabled={readOnly} />
+            </div>
 
-        <div className="grid gap-2 sm:grid-cols-3">
-          <label className="flex items-center justify-between rounded-xl border border-zinc-200 px-3 py-2 text-sm">
-            <span>Lunch</span>
-            <input
-              type="checkbox"
-              checked={form.lunchProvided}
-              onChange={(e) => setForm((p) => ({ ...p, lunchProvided: e.target.checked }))}
-              disabled={readOnly}
-            />
-          </label>
-          <label className="flex items-center justify-between rounded-xl border border-zinc-200 px-3 py-2 text-sm">
-            <span>Dinner</span>
-            <input
-              type="checkbox"
-              checked={form.dinnerProvided}
-              onChange={(e) => setForm((p) => ({ ...p, dinnerProvided: e.target.checked }))}
-              disabled={readOnly}
-            />
-          </label>
-          <label className="flex items-center justify-between rounded-xl border border-zinc-200 px-3 py-2 text-sm">
-            <span>Snacks</span>
-            <input
-              type="checkbox"
-              checked={form.snacksProvided}
-              onChange={(e) => setForm((p) => ({ ...p, snacksProvided: e.target.checked }))}
-              disabled={readOnly}
-            />
-          </label>
-        </div>
+            <div className="grid gap-2 sm:grid-cols-3">
+              <label className="flex items-center justify-between rounded-xl border border-zinc-200 px-3 py-2 text-sm">
+                <span>Lunch</span>
+                <input
+                  type="checkbox"
+                  checked={form.lunchProvided}
+                  onChange={(e) => setForm((p) => ({ ...p, lunchProvided: e.target.checked }))}
+                  disabled={readOnly}
+                />
+              </label>
+              <label className="flex items-center justify-between rounded-xl border border-zinc-200 px-3 py-2 text-sm">
+                <span>Dinner</span>
+                <input
+                  type="checkbox"
+                  checked={form.dinnerProvided}
+                  onChange={(e) => setForm((p) => ({ ...p, dinnerProvided: e.target.checked }))}
+                  disabled={readOnly}
+                />
+              </label>
+              <label className="flex items-center justify-between rounded-xl border border-zinc-200 px-3 py-2 text-sm">
+                <span>Snacks</span>
+                <input
+                  type="checkbox"
+                  checked={form.snacksProvided}
+                  onChange={(e) => setForm((p) => ({ ...p, snacksProvided: e.target.checked }))}
+                  disabled={readOnly}
+                />
+              </label>
+            </div>
 
-        <button
-          className="btn-primary w-full sm:w-auto"
-          onClick={submit}
-          disabled={readOnly || submitting || !form.name || !form.eventDate || !form.eventTime || !form.location}
-        >
-          {submitting ? 'Saving...' : editingEvent ? 'Update Event' : 'Create Event'}
-        </button>
+            <button
+              className="btn-primary w-full sm:w-auto"
+              onClick={submit}
+              disabled={readOnly || submitting || !form.name || !form.eventDate || !form.eventTime || !form.location}
+            >
+              {submitting ? 'Saving...' : editingEvent ? 'Update Event' : 'Create Event'}
+            </button>
+          </>
+        )}
       </div>
 
       <div className="card space-y-3 p-3 md:hidden">

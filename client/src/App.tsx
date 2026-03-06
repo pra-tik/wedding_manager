@@ -695,8 +695,8 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen px-3 py-3 sm:px-4 sm:py-5 md:px-8 md:py-8">
-      <div className="mx-auto max-w-7xl gap-4 md:grid md:grid-cols-[260px_minmax(0,1fr)]">
+    <div className="min-h-screen px-3 py-4 sm:px-5 sm:py-6 md:px-8 md:py-9">
+      <div className="mx-auto max-w-7xl gap-4 md:grid md:grid-cols-[250px_minmax(0,1fr)]">
         <Sidebar
           activeView={activeView}
           onChange={setActiveView}
@@ -706,15 +706,18 @@ function App() {
         />
 
         <main className="mt-4 min-w-0 space-y-4 md:mt-0">
-          <header className="card flex flex-col gap-3 p-3 sm:p-4">
+          <header className="card flex flex-col gap-3 p-3 sm:p-5">
             <div className="flex items-start justify-between gap-3">
               <button className="btn-muted px-2 py-1 md:hidden" onClick={() => setMobileMenuOpen(true)} aria-label="Open menu">
                 <Menu size={16} />
               </button>
-              <h2 className="text-lg font-semibold text-zinc-900 sm:text-xl">Wedding Management Dashboard</h2>
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-teal-700">Command Center</p>
+                <h2 className="text-2xl font-semibold text-slate-900 sm:text-3xl">Wedding Dashboard</h2>
+              </div>
             </div>
             <div>
-              <p className="text-sm text-zinc-500">Signed in as {currentUser.username}</p>
+              <p className="text-sm text-slate-500">Signed in as {currentUser.username}</p>
             </div>
 
             <div className="hidden md:flex">

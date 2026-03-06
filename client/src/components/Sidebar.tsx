@@ -28,8 +28,11 @@ export function Sidebar({ activeView, onChange, permissions, mobileOpen, onClose
 
   return (
     <>
-      <aside className="card hidden p-3 md:block md:p-5">
-        <h1 className="mb-3 text-base font-semibold text-zinc-900 md:mb-6 md:text-lg">Wedding Planner</h1>
+      <aside className="card sticky top-6 hidden p-3 md:block md:p-5">
+        <div className="mb-4 rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 px-3 py-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-teal-700">Planner Suite</p>
+          <h1 className="mt-1 text-lg font-semibold text-slate-900">Wedding Ops</h1>
+        </div>
         <nav className="flex gap-2 overflow-x-auto pb-1 md:block md:space-y-2 md:overflow-visible md:pb-0">
           {visibleNavItems.map((item) => {
             const Icon = item.icon;
@@ -40,13 +43,13 @@ export function Sidebar({ activeView, onChange, permissions, mobileOpen, onClose
                 key={item.id}
                 onClick={() => onChange(item.id)}
                 className={`relative flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-left text-sm transition md:w-full md:gap-3 ${
-                  isActive ? 'text-zinc-950' : 'text-zinc-600 hover:bg-zinc-100'
+                  isActive ? 'text-slate-950' : 'text-slate-600 hover:bg-slate-100/70'
                 }`}
               >
                 {isActive && (
                   <motion.span
                     layoutId="active-nav"
-                    className="absolute inset-0 rounded-xl bg-emerald-100"
+                    className="absolute inset-0 rounded-xl border border-emerald-200 bg-emerald-100/80"
                     transition={{ type: 'spring', stiffness: 300, damping: 26 }}
                   />
                 )}
@@ -62,10 +65,10 @@ export function Sidebar({ activeView, onChange, permissions, mobileOpen, onClose
 
       {mobileOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
-          <button className="absolute inset-0 bg-black/35" onClick={onCloseMobile} aria-label="Close navigation" />
-          <aside className="absolute left-0 top-0 h-full w-72 max-w-[85vw] bg-white p-4 shadow-2xl">
+          <button className="absolute inset-0 bg-slate-900/35 backdrop-blur-[2px]" onClick={onCloseMobile} aria-label="Close navigation" />
+          <aside className="absolute left-0 top-0 h-full w-72 max-w-[85vw] border-r border-white/60 bg-white/95 p-4 shadow-2xl backdrop-blur-xl">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-base font-semibold text-zinc-900">Menu</h2>
+              <h2 className="text-base font-semibold text-slate-900">Menu</h2>
               <button className="btn-muted px-2 py-1" onClick={onCloseMobile} aria-label="Close menu">
                 <X size={16} />
               </button>
@@ -82,7 +85,7 @@ export function Sidebar({ activeView, onChange, permissions, mobileOpen, onClose
                       onCloseMobile();
                     }}
                     className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm ${
-                      isActive ? 'bg-emerald-100 text-zinc-900' : 'text-zinc-600 hover:bg-zinc-100'
+                      isActive ? 'bg-emerald-100 text-slate-900' : 'text-slate-600 hover:bg-slate-100'
                     }`}
                   >
                     <Icon size={16} />

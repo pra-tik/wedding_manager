@@ -3,15 +3,43 @@
 @tailwind utilities;
 
 :root {
-  font-family: 'Avenir Next', 'Segoe UI', sans-serif;
-  color: #18181b;
+  --ink-1: #0f172a;
+  --ink-2: #334155;
+  --surface: #fcfcfb;
+  --brand-1: #0f766e;
+  --brand-2: #22c55e;
+  --line: rgba(15, 23, 42, 0.1);
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    'SF Pro Text',
+    'SF Pro Display',
+    'Helvetica Neue',
+    'Segoe UI',
+    sans-serif;
+  color: var(--ink-1);
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-  background: radial-gradient(circle at top right, #d1fae5 0%, #f4f4f5 45%, #fafafa 100%);
+  background:
+    radial-gradient(1200px 500px at -10% -10%, rgba(34, 197, 94, 0.2), transparent 60%),
+    radial-gradient(900px 480px at 110% -30%, rgba(20, 184, 166, 0.22), transparent 58%),
+    linear-gradient(180deg, #f7faf8 0%, #f2f5f8 44%, #edf2f4 100%);
   overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(15, 23, 42, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(15, 23, 42, 0.02) 1px, transparent 1px);
+  background-size: 36px 36px;
+  mask-image: radial-gradient(circle at 50% 10%, #000 40%, transparent 100%);
 }
 
 * {
@@ -19,21 +47,65 @@ body {
 }
 
 .card {
-  @apply rounded-2xl bg-white/90 shadow-soft backdrop-blur;
+  @apply rounded-2xl border border-white/60 bg-white/80 shadow-soft backdrop-blur-xl;
+}
+
+.card:hover {
+  border-color: var(--line);
 }
 
 .input {
-  @apply w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-50;
+  @apply w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-2 text-sm text-slate-800 outline-none transition;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.input::placeholder {
+  color: #94a3b8;
+}
+
+.input:focus {
+  border-color: rgba(15, 118, 110, 0.55);
+  box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.12);
 }
 
 .btn {
-  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition;
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition duration-150;
+  transform: translateY(0);
+}
+
+.btn:active {
+  transform: translateY(1px);
 }
 
 .btn-primary {
-  @apply btn bg-brand-500 text-white hover:bg-brand-700;
+  @apply btn text-white;
+  background: linear-gradient(135deg, var(--brand-1), var(--brand-2));
+  box-shadow: 0 10px 20px -12px rgba(15, 118, 110, 0.75);
+}
+
+.btn-primary:hover {
+  filter: saturate(1.08) brightness(0.98);
 }
 
 .btn-muted {
-  @apply btn bg-zinc-200 text-zinc-700 hover:bg-zinc-300;
+  @apply btn border border-slate-200 bg-white/90 text-slate-700;
+}
+
+.btn-muted:hover {
+  border-color: #94a3b8;
+  background: #f8fafc;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(71, 85, 105, 0.35);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
 }
